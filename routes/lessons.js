@@ -5,10 +5,13 @@ const router = express.Router();
 
 // GET all lessons
 router.get("/", async (req, res) => {
+    console.log("GET /api/lessons hit");
+
   try {
     const lessons = await Lesson.find();
     res.json(lessons);
   } catch (err) {
+    console.error("❌ Error fetching lessons:", err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -26,6 +29,7 @@ router.get("/:id", async (req, res) => {
 
 // POST a new lesson
 router.post("/", async (req, res) => {
+  console.log("POST /api/lessons hit");
   const lesson = new Lesson(req.body);
   try {
     const savedLesson = await lesson.save();
