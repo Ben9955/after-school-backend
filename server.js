@@ -2,7 +2,10 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+// routes
 import lessonsRouter from "./routes/lessons.js";
+import ordersRouter from "./routes/orders.js";
+
 
 dotenv.config();
 
@@ -15,6 +18,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/lessons", lessonsRouter);
+app.use("/api/orders", ordersRouter);
 
 // Connect to MongoDB
 mongoose
