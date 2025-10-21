@@ -7,6 +7,7 @@ import lessonsRouter from "./routes/lessons.js";
 import ordersRouter from "./routes/orders.js";
 //middlewares
 import logger from "./middlewares/logger.js";
+import staticImages from "./middlewares/staticImages.js";
 
 
 dotenv.config();
@@ -18,6 +19,8 @@ const PORT = process.env.PORT || 4001;
 app.use(logger);
 app.use(cors());
 app.use(express.json());
+app.get("/images/:filename", staticImages);
+
 
 // Routes
 app.use("/api/lessons", lessonsRouter);
