@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 // routes
 import lessonsRouter from "./routes/lessons.js";
 import ordersRouter from "./routes/orders.js";
+//middlewares
+import logger from "./middlewares/logger.js";
 
 
 dotenv.config();
@@ -13,6 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 4001;
 
 // Middleware
+app.use(logger);
 app.use(cors());
 app.use(express.json());
 
