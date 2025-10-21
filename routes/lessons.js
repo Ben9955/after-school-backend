@@ -5,13 +5,33 @@ const router = express.Router();
 
 // GET all lessons
 router.get("/", async (req, res) => {
-    console.log("GET /api/lessons hit");
-
   try {
     const lessons = await Lesson.find();
     res.json(lessons);
   } catch (err) {
-    console.error("❌ Error fetching lessons:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET lessons by search query
+router.get("/search", async (req, res) => {
+  const { q } = req.query; 
+  if (!q) return res.status(400).json({ message: "Search query is required" });
+
+  try {
+    // Full-text search on multiple fields
+    const regex = new RegExp(q, "i"); 
+    const numQuery = Number(q);
+    const lessons = await Lesson.find({
+      $or: [
+        { subject: regex },
+        { location: regex },
+        { description: regex },
+        ...(isNaN(numQuery) ? [] : [{ price: numQuery }, { spaces: numQuery }])
+      ]
+    });
+    res.json(lessons);
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
@@ -38,5 +58,6 @@ router.post("/", async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 export default router;
