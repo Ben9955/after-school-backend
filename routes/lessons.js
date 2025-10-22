@@ -1,12 +1,13 @@
 import express from "express";
-import Lesson from "../models/Lesson.js";
+import { ObjectId } from "mongodb";
 
 const router = express.Router();
 
 // GET all lessons
 router.get("/", async (req, res) => {
+  const db = req.app.locals.db;
   try {
-    const lessons = await Lesson.find();
+    const lessons = await db.collection("lessons").find().toArray();
     res.json(lessons);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -15,31 +16,34 @@ router.get("/", async (req, res) => {
 
 // GET lessons by search query
 router.get("/search", async (req, res) => {
-  const { q } = req.query; 
+  const db = req.app.locals.db;
+  const { q } = req.query;
   if (!q) return res.status(400).json({ message: "Search query is required" });
 
   try {
-    // Full-text search on multiple fields
     const regex = new RegExp(q, "i"); 
     const numQuery = Number(q);
-    const lessons = await Lesson.find({
+
+    const lessons = await db.collection("lessons").find({
       $or: [
         { subject: regex },
         { location: regex },
         { description: regex },
         ...(isNaN(numQuery) ? [] : [{ price: numQuery }, { spaces: numQuery }])
       ]
-    });
+    }).toArray();
+
     res.json(lessons);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// GET a single lesson by id
+// GET a single lesson by ID
 router.get("/:id", async (req, res) => {
+  const db = req.app.locals.db;
   try {
-    const lesson = await Lesson.findById(req.params.id);
+    const lesson = await db.collection("lessons").findOne({ _id: new ObjectId(req.params.id) });
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
     res.json(lesson);
   } catch (err) {
@@ -49,33 +53,55 @@ router.get("/:id", async (req, res) => {
 
 // POST a new lesson
 router.post("/", async (req, res) => {
-  console.log("POST /api/lessons hit");
-  const lesson = new Lesson(req.body);
+  const db = req.app.locals.db;
+  const { subject, location, price, spaces, image, description } = req.body;
+
+  if (!subject || !location || price == null || spaces == null) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
   try {
-    const savedLesson = await lesson.save();
-    res.status(201).json(savedLesson);
+    const result = await db.collection("lessons").insertOne({ subject, location, price, spaces, image, description });
+    const insertedLesson = await db.collection("lessons").findOne({ _id: result.insertedId });
+    res.status(201).json(insertedLesson);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Update a lesson by ID
+
+// PUT to update a lesson by ID
 router.put("/:id", async (req, res) => {
+  const db = req.app.locals.db;
+  const updates = req.body;
+
+  if (!ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid lesson ID" });
+  }
+
+  if (!Object.keys(updates).length) {
+    return res.status(400).json({ message: "No fields provided to update" });
+  }
+
   try {
-    const lessonId = req.params.id;
-    const updates = req.body; 
-    const updatedLesson = await Lesson.findByIdAndUpdate(
-      lessonId,
+    const result = await db.collection("lessons").findOneAndUpdate(
+      { _id: new ObjectId(req.params.id) },
       { $set: updates },
-      { new: true, runValidators: true }
+      { returnDocument: "after", upsert: false }  
     );
-    if (!updatedLesson) return res.status(404).json({ message: "Lesson not found" });
+
+    // Fallback: if value is null, fetch the document manually
+    const updatedLesson = result.value || await db.collection("lessons").findOne({ _id: new ObjectId(req.params.id) });
+
+    if (!updatedLesson) {
+      return res.status(404).json({ message: "Lesson not found" });
+    }
+
     res.json(updatedLesson);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-
-
 export default router;
+

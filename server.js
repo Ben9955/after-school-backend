@@ -1,5 +1,5 @@
 import express from "express";
-import mongoose from "mongoose";
+import { MongoClient } from "mongodb";
 import cors from "cors";
 import dotenv from "dotenv";
 // routes
@@ -27,10 +27,21 @@ app.use("/api/lessons", lessonsRouter);
 app.use("/api/orders", ordersRouter);
 
 // Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+const client = new MongoClient(process.env.MONGO_URI);
+let db;
+
+async function connectDB() {
+  try {
+    await client.connect();
+    db = client.db("after-school"); 
+    app.locals.db = db; 
+    console.log("MongoDB connected successfully");
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+  }
+}
+
+connectDB();
 
 // Start server
 app.listen(PORT, () => {
