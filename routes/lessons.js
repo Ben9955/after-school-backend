@@ -59,5 +59,23 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Update a lesson by ID
+router.put("/:id", async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+    const updates = req.body; 
+    const updatedLesson = await Lesson.findByIdAndUpdate(
+      lessonId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+    if (!updatedLesson) return res.status(404).json({ message: "Lesson not found" });
+    res.json(updatedLesson);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+
 
 export default router;
