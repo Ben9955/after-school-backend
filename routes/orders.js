@@ -30,6 +30,29 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET single order by ID
+router.get("/:id", async (req, res) => {
+  const db = req.app.locals.db;
+  const orderId = req.params.id;
+
+  try {
+    const order = await db.collection("orders").findOne({ _id: new ObjectId(orderId) });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    order.lessons = await Promise.all(
+      order.lessons.map(async (item) => {
+        const lesson = await db.collection("lessons").findOne({ _id: new ObjectId(item.lessonId) });
+        return { ...item, lesson }; 
+      })
+    );
+
+    res.json(order);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // POST a new order
 router.post("/", async (req, res) => {
   const db = req.app.locals.db;
