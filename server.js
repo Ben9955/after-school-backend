@@ -2,13 +2,14 @@ import express from "express";
 import { MongoClient } from "mongodb";
 import cors from "cors";
 import dotenv from "dotenv";
-// routes
-import lessonsRouter from "./routes/lessons.js";
-import ordersRouter from "./routes/orders.js";
+
 //middlewares
 import logger from "./middlewares/logger.js";
 import staticImages from "./middlewares/staticImages.js";
 
+// routes
+import lessonsRouter from "./routes/lessons.js";
+import ordersRouter from "./routes/orders.js";
 
 dotenv.config();
 
