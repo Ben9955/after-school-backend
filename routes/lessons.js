@@ -3,11 +3,20 @@ import { ObjectId } from "mongodb";
 
 const router = express.Router();
 
+
 // GET all lessons
 router.get("/", async (req, res) => {
+  const BACKEND_URL = process.env.BACKEND_URL;
+
   const db = req.app.locals.db;
   try {
-    const lessons = await db.collection("lessons").find().toArray();
+    let lessons = await db.collection("lessons").find().toArray();
+
+    lessons = lessons.map(lesson => ({
+      ...lesson,
+      image: lesson.image || `${BACKEND_URL}/images/${lesson.subject.toLowerCase()}.jpg`
+    }));
+
     res.json(lessons);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -16,6 +25,7 @@ router.get("/", async (req, res) => {
 
 // GET lessons by search query
 router.get("/search", async (req, res) => {
+  const BACKEND_URL = process.env.BACKEND_URL;
   const db = req.app.locals.db;
   const { q } = req.query;
   if (!q) return res.status(400).json({ message: "Search query is required" });
@@ -24,7 +34,7 @@ router.get("/search", async (req, res) => {
     const regex = new RegExp(q, "i"); 
     const numQuery = Number(q);
 
-    const lessons = await db.collection("lessons").find({
+    let lessons = await db.collection("lessons").find({
       $or: [
         { subject: regex },
         { location: regex },
@@ -32,6 +42,11 @@ router.get("/search", async (req, res) => {
         ...(isNaN(numQuery) ? [] : [{ price: numQuery }, { spaces: numQuery }])
       ]
     }).toArray();
+
+    lessons = lessons.map(lesson => ({
+      ...lesson,
+      image: lesson.image || `${BACKEND_URL}/images/${lesson.subject.toLowerCase()}.jpg`
+    }));
 
     res.json(lessons);
   } catch (err) {
@@ -41,10 +56,12 @@ router.get("/search", async (req, res) => {
 
 // GET a single lesson by ID
 router.get("/:id", async (req, res) => {
+  const BACKEND_URL = process.env.BACKEND_URL;
   const db = req.app.locals.db;
   try {
-    const lesson = await db.collection("lessons").findOne({ _id: new ObjectId(req.params.id) });
+    let lesson = await db.collection("lessons").findOne({ _id: new ObjectId(req.params.id) });
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
+    lesson.image = lesson.image || `${BACKEND_URL}/images/${lesson.subject.toLowerCase()}.jpg`;
     res.json(lesson);
   } catch (err) {
     res.status(500).json({ message: err.message });
