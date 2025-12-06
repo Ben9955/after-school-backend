@@ -127,14 +127,18 @@ router.put("/:id", async (req, res) => {
     const result = await db.collection("lessons").findOneAndUpdate(
       { _id: new ObjectId(req.params.id) },
       { $set: updates },
-      { returnDocument: "after"}  
-    );
+      { returnDocument: "after" }
+    );  
 
-    if (!result.value)
+   const updatedLesson = result.value || await db.collection("lessons").findOne({ _id: new ObjectId(req.params.id) });
+
+   if (!updatedLesson) {
       return res.status(404).json({ message: "Lesson not found" });
+    }
 
-    res.json(result.value);
-  } catch (err) {
+    res.json(updatedLesson);
+
+} catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
