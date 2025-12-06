@@ -92,6 +92,15 @@ router.post("/", async (req, res) => {
   const { subject, location, price, spaces, image, description } = body;
 
   try {
+    //Check for duplicates
+    const existingLesson = await db.collection("lessons").findOne({ subject: subject });
+
+    if (existingLesson) {
+      return res.status(400).json({ 
+        message: `Lesson with subject "${subject}" already exists` 
+      });
+    }
+
     const result = await db.collection("lessons").insertOne({ subject, location, price, spaces, image, description });
     const insertedLesson = await db.collection("lessons").findOne({ _id: result.insertedId });
     res.status(201).json(insertedLesson);
