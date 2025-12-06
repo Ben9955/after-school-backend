@@ -89,7 +89,7 @@ router.post("/", async (req, res) => {
   const validation = validateLessonBody(req.body);
   if (validation) return res.status(400).json({ message: validation });
 
-  const { subject, location, price, spaces, image, description } = body;
+  const { subject, location, price, spaces, image, description } = req.body;
 
   try {
     //Check for duplicates
