@@ -17,11 +17,11 @@ function validateOrderBody(body) {
     return "Lessons must be a non-empty array.";
 
   for (const item of lessons) {
-    if (!item.lessonId || !validateObjectId(item.lessonId))
+    if (!item.lessonId || !ObjectId.isValid(item.lessonId))
       return "Each lesson must contain a valid lessonId.";
 
-    if (item.spaces == null || typeof item.spaces !== "number")
-      return "Each lesson must include 'spaces' as a number.";
+    if (item.qty == null || typeof item.qty !== "number")
+      return "Each lesson must include 'qty' as a number.";
   }
 
   return null;
@@ -107,6 +107,8 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const db = req.app.locals.db;
 
+  const orderId = req.params.id;
+  
   if (!ObjectId.isValid(orderId))
     return res.status(400).json({ message: "Invalid order ID" });
 
